@@ -42,11 +42,18 @@ To think about before you start coding:
     implementations of curry and uncurry work properly?
 
 Now implement the two functions curry and uncurry.
+Note: Curry takes in uncurried function. The input of the curried
+function is the type of a uncurried function
 ......................................................................*)
 
-let curry = fun _ -> failwith "curry not implemented" ;;
+let curry (f : 'a * 'b -> 'c) =
+  fun (x : 'a) -> 
+  fun (y : 'b) -> 
+  f (x, y) ;;
      
-let uncurry = fun _ -> failwith "uncurry not implemented" ;;
+let uncurry (f : 'a -> 'b -> 'c) =
+ fun ((x,y) : 'a * 'b) -> 
+ f x y ;;
 
 (*......................................................................
 Exercise 2: OCaml's built in binary operators, like ( + ) and ( * ) are
@@ -114,7 +121,10 @@ instead of an int.
 ......................................................................*)
 
 let max_list (lst : int list) : int option =
-  failwith "max_list not implemented" ;;
+  match lst with
+  | [elt] -> Some elt
+  | head :: tail -> max (Some head) (max_list tail)
+  | [] -> None ;;
   
 (*......................................................................
 Exercise 5: Write a function to return the smaller of two int options,
@@ -124,7 +134,12 @@ useful.
 ......................................................................*)
 
 let min_option (x : int option) (y : int option) : int option =
-  failwith "min_option not implemented" ;;
+  match x, y with
+  | None, None -> None 
+  | Some _, None -> x 
+  | None, Some _ -> y
+  | Some _, Some _ ->
+  	if x < y then x else y ;;
      
 (*......................................................................
 Exercise 6: Write a function to return the larger of two int options, or
@@ -153,19 +168,24 @@ result appropriately returned.
 What is calc_option's function signature? Implement calc_option.
 ......................................................................*)
 
-let calc_option =
-  fun _ -> failwith "calc_option not implemented" ;;
+let calc_option f x y =
+  match x, y with
+  | None, None -> None 
+  | Some _, None -> x 
+  | None, Some _ -> y
+  | Some _, Some _ ->
+  	f x y ;;
      
 (*......................................................................
 Exercise 8: Now rewrite min_option and max_option using the higher-order
 function calc_option. Call them min_option_2 and max_option_2.
 ......................................................................*)
   
-let min_option_2 =
-  fun _ -> failwith "min_option_2 not implemented" ;;
+let min_option_2 x y =
+  calc_option ((<) x y) ;;
      
-let max_option_2 =
-  fun _ -> failwith "max_option_2 not implemented" ;;
+let max_option_2 x y =
+  calc_option x > y ;;
 
 (*......................................................................
 Exercise 9: Now that we have calc_option, we can use it in other
