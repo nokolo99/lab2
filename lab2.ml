@@ -120,7 +120,7 @@ Reimplement max_list, but this time, it should return an int option
 instead of an int.
 ......................................................................*)
 
-let max_list (lst : int list) : int option =
+let rec max_list (lst : int list) : int option =
   match lst with
   | [elt] -> Some elt
   | head :: tail -> max (Some head) (max_list tail)
@@ -168,13 +168,13 @@ result appropriately returned.
 What is calc_option's function signature? Implement calc_option.
 ......................................................................*)
 
-let calc_option f x y =
+let calc_option (f: 'a option -> 'a option -> bool) x y =
   match x, y with
   | None, None -> None 
   | Some _, None -> x 
   | None, Some _ -> y
   | Some _, Some _ ->
-  	f x y ;;
+  	if f x y then x else y ;;
      
 (*......................................................................
 Exercise 8: Now rewrite min_option and max_option using the higher-order
@@ -182,10 +182,10 @@ function calc_option. Call them min_option_2 and max_option_2.
 ......................................................................*)
   
 let min_option_2 x y =
-  calc_option ((<) x y) ;;
+  calc_option (<) x y ;;
      
-let max_option_2 x y =
-  calc_option x > y ;;
+let max_option_2 (x : int option) (y : int option) =
+  calc_option (>) x y ;;
 
 (*......................................................................
 Exercise 9: Now that we have calc_option, we can use it in other
