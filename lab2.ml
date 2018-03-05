@@ -169,7 +169,8 @@ result appropriately returned.
 What is calc_option's function signature? Implement calc_option.
 ......................................................................*)
 
-let calc_option (f : 'a -> 'a -> 'a) (x : 'a option) (y : 'a option) : 'a option =
+let calc_option (f : 'a -> 'a -> 'a) (x : 'a option) (y : 'a option) 
+: 'a option =
   match x, y with
   | Some x, Some y -> Some (f x y)
   | Some x, None | None, Some x -> Some x
@@ -380,7 +381,7 @@ For example:
 let verify (enrollments : enrollment list) : bool =
   let h = List.hd enrollments in
     List.for_all (fun x -> x.id = h.id) enrollments ;;
-    
+
 (* let verify (enrollments : enrollment list) : bool =
   let transcript_by_name lst name =
     x(List.filter (fun s -> s.name = name) lst
