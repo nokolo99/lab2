@@ -69,10 +69,10 @@ functions.
 ......................................................................*)
 
 let plus =
-  fun _ -> failwith "plus not implemented"
+  fun x y -> uncurry ( + ) (x,y) ;;
      
 let times =
-  fun _ -> failwith "times not implemented" ;;
+  fun x y -> uncurry ( * ) (x,y) ;;
   
 (*......................................................................
 Exercise 3: Recall the prods function from Lab 1:
@@ -86,8 +86,8 @@ Now reimplement prods using map and your uncurried times function. Why
 do you need the uncurried times function?
 ......................................................................*)
 
-let prods =
-  fun _ -> failwith "prods not implemented" ;; 
+let prods (lst : (int * int) list) : int list =
+  List.map (fun (x,y) -> times x y) lst ;; 
 
 (*======================================================================
 Part 2: Option types
@@ -135,11 +135,9 @@ useful.
 
 let min_option (x : int option) (y : int option) : int option =
   match x, y with
-  | None, None -> None 
-  | Some _, None -> x 
-  | None, Some _ -> y
-  | Some _, Some _ ->
-  	if x < y then x else y ;;
+  | Some x, Some y -> Some (min x y)
+  | Some x, None | None, Some x -> Some x
+  | _ -> None ;;
      
 (*......................................................................
 Exercise 6: Write a function to return the larger of two int options, or
@@ -148,7 +146,10 @@ other.
 ......................................................................*)
 
 let max_option (x : int option) (y : int option) : int option =
-  failwith "max_option not implemented" ;;
+  match x, y with
+  | Some x, Some y -> Some (max x y)
+  | Some x, None | None, Some x -> Some x
+  | _ -> None ;;
 
 (*======================================================================
 Part 3: Polymorphism practice
@@ -168,24 +169,22 @@ result appropriately returned.
 What is calc_option's function signature? Implement calc_option.
 ......................................................................*)
 
-let calc_option (f: 'a option -> 'a option -> bool) x y =
+let calc_option (f : 'a -> 'a -> 'a) (x : 'a option) (y : 'a option) : 'a option =
   match x, y with
-  | None, None -> None 
-  | Some _, None -> x 
-  | None, Some _ -> y
-  | Some _, Some _ ->
-  	if f x y then x else y ;;
+  | Some x, Some y -> Some (f x y)
+  | Some x, None | None, Some x -> Some x
+  | _ -> None ;;
      
 (*......................................................................
 Exercise 8: Now rewrite min_option and max_option using the higher-order
 function calc_option. Call them min_option_2 and max_option_2.
 ......................................................................*)
   
-let min_option_2 x y =
-  calc_option (<) x y ;;
+let min_option_2 =
+  fun x y -> calc_option min x y ;;
      
-let max_option_2 (x : int option) (y : int option) =
-  calc_option (>) x y ;;
+let max_option_2 =
+  fun x y -> calc_option max x y ;;
 
 (*......................................................................
 Exercise 9: Now that we have calc_option, we can use it in other
@@ -196,7 +195,7 @@ None, return the other.
 ......................................................................*)
   
 let and_option =
-  fun _ -> failwith "and_option not implemented" ;;
+  fun x y -> calc_option (&&) x y ;;
   
 (*......................................................................
 Exercise 10: In Lab 1, you implemented a function zip that takes two
@@ -215,8 +214,10 @@ type of the result? Did you provide full typing information in the
 first line of the definition?
 ......................................................................*)
 
-let zip_exn =
-  fun _ -> failwith "zip_exn not implemented" ;;
+let rec zip_exn (x : 'a list) (y : 'b list) : ('a * 'b) list =
+  match x, y with
+  | [], [] -> []
+  | xhd :: xtl, yhd :: ytl -> (xhd, yhd) :: (zip_exn xtl ytl) ;;
 
 (*......................................................................
 Exercise 11: Another problem with the implementation of zip_exn is that,
@@ -227,8 +228,11 @@ generate an alternate solution without this property?
 Do so below in a new definition of zip.
 ......................................................................*)
 
-let zip =
-  fun _ -> failwith "zip not implemented" ;;
+let zip (x : 'a list) (y : 'b list) : ('a * 'b) list option =
+    match x, y with
+    | [], [] -> Some ([])
+    | xhd :: xtl, yhd :: ytl -> Some ((xhd, yhd) :: (zip_exn xtl ytl))
+    | _ -> None ;;
 
 (*====================================================================
 Part 4: Factoring out None-handling
@@ -259,9 +263,11 @@ first argument is None, or if its first argument is Some v, it applies
 its second argument to that v and returns the result, appropriately
 adjusted for the result type. Implement the maybe function.
 ......................................................................*)
-  
+
 let maybe (f : 'a -> 'b) (x : 'a option) : 'b option =
-  failwith "maybe not implemented" ;; 
+  match x with
+  | None -> None
+  | Some v -> Some (f v) ;; 
 
 (*......................................................................
 Exercise 13: Now reimplement dotprod to use the maybe function. (The
@@ -275,7 +281,7 @@ let sum : int list -> int =
   List.fold_left (+) 0 ;;
 
 let dotprod (a : int list) (b : int list) : int option =
-  failwith "dot_prod not implemented" ;; 
+  maybe sum (Some (prods (zip_exn a b))) ;; 
 
 (*......................................................................
 Exercise 14: Reimplement zip along the same lines, in zip_2 below. 
@@ -339,7 +345,7 @@ For example:
 let transcript (enrollments : enrollment list)
                (student : int)
              : enrollment list =
-  failwith "transcript not implemented" ;;
+  List.filter (fun s -> s.id = student) enrollments ;;
   
 (*......................................................................
 Exercise 17: Define a function called ids that takes an enrollment
@@ -352,8 +358,14 @@ For example:
 - : int list = [1; 2; 5]
 ......................................................................*)
 
-let ids (enrollments: enrollment list) : int list =
-  failwith "ids not implemented" ;;
+(* let ids (enrollments: enrollment list) : int list =
+  let get_ids lst =
+    List.map (fun s -> s.id) lst
+  in
+  List.sort_uniq (compare) (get_ids enrollments);; *)
+
+  let ids (enrollments: enrollment list) : int list =
+  List.sort_uniq compare (List.map (fun x -> x.id) (enrollments)) ;;
   
 (*......................................................................
 Exercise 18: Define a function called verify that determines whether all
@@ -366,4 +378,11 @@ For example:
 ......................................................................*)
 
 let verify (enrollments : enrollment list) : bool =
-  failwith "verify not implemented" ;;
+  let h = List.hd enrollments in
+    List.for_all (fun x -> x.id = h.id) enrollments ;;
+    
+(* let verify (enrollments : enrollment list) : bool =
+  let transcript_by_name lst name =
+    x(List.filter (fun s -> s.name = name) lst
+  in
+  let ids = List.map (fun s -> s.id) (transcript_by_name enrollment) *)
